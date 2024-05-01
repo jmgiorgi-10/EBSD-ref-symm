@@ -72,7 +72,9 @@ class EBSD_Ti64DIC_dataset(data.Dataset):
         return lr, hr                                                                                                                     
 
 class Misorientation_dist:
-    def __init__(self, args, dist_type = 'rot_dist_relative', act = None, syms_req = True):
+    def __init__(self, args, dist_type = 'rot_dist', act = None, syms_req = True):
+
+        # dist_type = args.dist_type
         
         print(f'Parameters for Misorientation Distance')
         print('+++++++++++++++++++++++++++++++++++++++++')
@@ -89,7 +91,7 @@ class Misorientation_dist:
         else:
             syms = None
         
-        self.act_loss = ActAndLoss(act, Loss(dist_type, syms), quat_dim=-1)
+        self.act_loss = ActAndLoss(act, Loss(dist_type, syms), quat_dim=-1) # by this point, the quaternion channels have already been moved to the last data tensor dimension.
             
     def __call__(self, sr, hr):
         loss = self.act_loss(sr, hr)

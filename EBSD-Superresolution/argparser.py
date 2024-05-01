@@ -106,7 +106,7 @@ class Argparser:
                                 help='pre-trained model directory')
         arg_parser.add_argument('--save', type=str, default='SAN_Misorientation_Cubo_Symm_debug',
                                 help='file name to save trained model')
-        arg_parser.add_argument('--root_dir', type=str, default='/media/hdd3/jmgiorgi/EBSD2')
+        arg_parser.add_argument('--root_dir', type=str, default='/media/hdd3/jmgiorgi/EBSD-ref-symm')
 
         arg_parser.add_argument('--load', type=str, default='.',
                                 help='file name to load')

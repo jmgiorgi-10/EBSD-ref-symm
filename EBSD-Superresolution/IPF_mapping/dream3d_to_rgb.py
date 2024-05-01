@@ -7,13 +7,28 @@ from argparser import Argparser
 
 args = Argparser().args
 
-npy_file_dir = f'{args.fpath}/{args.dataset_type}_{args.model_name}'
+import pdb; pdb.set_trace()
 
-file_locs = sorted(glob.glob(f'{npy_file_dir}/*{args.section}*{args.file_type}*.npy'))
+
+
+file_locs = []
+dream_3d_file = f''
+npy_file_dir = f''
+
+if (args.file_type == "HR" or args.file_type == "LR" or args.file_type == "hr" or args.file_type == "lr"):
+    npy_file_dir = f'{args.fpath}'
+    file_locs = sorted(glob.glob(f'{args.fpath}/*{args.section}*.npy'))
+    dream_3d_file = f'{args.fpath}/Dream3D/{args.section}_{args.file_type}.dream3d'
+else:
+    npy_file_dir = f'{args.fpath}/{args.dataset_type}_model_best'
+    file_locs = sorted(glob.glob(f'{npy_file_dir}/*{args.section}*{args.file_type}*.npy'))
+    dream_3d_file = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
+
+import pdb; pdb.set_trace()
 
 total_file = len(file_locs)
 
-dream_3d_file = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
+# dream_3d_file = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
 
 dream3d_file = h5py.File(f'{dream_3d_file}')
 

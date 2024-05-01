@@ -35,12 +35,23 @@ elif data == 'Ti7_3Percent':
     elif args.section == "Z_Block":
         Tupel = [213, 510, 56]
 
+elif data == 'Open_718':
+    if args.section == 'x_block':
+        Tupel = [301, 390, 191]
+    if args.section == 'y_block':
+        Tupel = [301, 191, 390]
+    if args.section == 'z_block':
+        Tupel = [390, 191, 301] 
 
  
 print(f'Tupel: {Tupel}')
-npy_file_dir = f'{args.fpath}/{args.dataset_type}_{args.model_name}'
-filedir = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
 
+filedir = f''
+if (args.file_type == "HR" or args.file_type == "LR" or args.file_type == "hr" or args.file_type == "lr"):
+    filedir = f'{args.fpath}/Dream3D/{args.section}_{args.file_type}.dream3d'
+else:
+    npy_file_dir = f'{args.fpath}/{args.dataset_type}_model_best'
+    filedir = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
 
 #field_dict["0"]["InputFile"] = f'/home/dkjangid/Material_Project/EBSD_Superresolution/{filedir}'
 

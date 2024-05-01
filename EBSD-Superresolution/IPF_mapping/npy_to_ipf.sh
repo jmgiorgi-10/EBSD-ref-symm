@@ -1,26 +1,26 @@
 #!/bin/bash
 
-modelname="edsr_l1_ti64"
+modelname="han_rot_dist_approx"
 filetype="SR"
 datasettype=("Test")
-material="Ti64"
-sect=("X_Block" "Y_Block" "Z_Block")
+material="Open_718"
+sect=("x_block")
 
 # path of Dream3D software
-dream3d_path="/home/dkjangid/Material_Project/EBSD_Superresolution/github_version/IPF_mapping/DREAM3D-6.5.141-Linux-x86_64/bin"
+dream3d_path="/media/hdd3/jmgiorgi/DREAM3D-6.5.171-Linux-x86_64/bin"
 
 #path of json file for Dream3D pipeline
-json_path="/home/dkjangid/Material_Project/EBSD_Superresolution/NPJ_Repo/EBSD-Superresolution/IPF_mapping/pipeline.json"
+json_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping/pipeline.json"
 
 # path of IPF mapping code
-home_path="/home/dkjangid/Material_Project/EBSD_Superresolution/NPJ_Repo/EBSD-Superresolution/IPF_mapping"
+home_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping"
 
 # path where numpy files (output of models) are saved
-file_path="/home/dkjangid/Material_Project/EBSD_Superresolution/NPJ_Repo/EBSD-Superresolution/experiments/saved_weights/edsr_l1_ti64/results"
+file_path="/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/han_rot_dist_approx/results"
+# file_path="/media/hdd3/jmgiorgi/fz_reduced/Open_718/Test/HR_Images"
 
 #path of your source dream3d file as refernece
-sourcename="/data/dkjangid/superresolution/Material_Dataset/Ti64_DIC_Homo_and_Cubochoric_FZ.dream3d"
-
+sourcename="/media/hdd3/jmgiorgi/FCC_Val_02-UPsa.dream3d"
 
 for s in ${sect[@]}; do
    

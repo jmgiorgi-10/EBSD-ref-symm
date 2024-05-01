@@ -5,6 +5,7 @@ class MisOrientation(nn.Module):
     """Misoreintation loss."""
     def __init__(self, args):
         super(MisOrientation, self).__init__()
+
         dist_type = args.dist_type
         act = args.act_loss
         syms_req = args.syms_req
@@ -14,10 +15,10 @@ class MisOrientation(nn.Module):
         print(f'dist_type: {dist_type}  activation:{act}  Symmetry:{syms_req}')
         print('+++++++++++++++++++++++++++++++++++++++++++++++++')
         from mat_sci_torch_quats.losses import ActAndLoss, Loss
-        from mat_sci_torch_quats.symmetries import hcp_syms
+        from mat_sci_torch_quats.symmetries import hcp_syms, fcc_syms
 
         if syms_req:
-            syms = hcp_syms
+            syms = fcc_syms
         else:
             syms = None
         
@@ -26,5 +27,8 @@ class MisOrientation(nn.Module):
     def forward(self, sr, hr):
         loss = self.act_loss(sr, hr)
         loss = torch.mean(loss)
+
+        # if loss < 0.5:
+        #     import pdb; pdb.set_trace()
         
         return loss

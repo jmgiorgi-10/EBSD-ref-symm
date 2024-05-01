@@ -62,6 +62,7 @@ class Trainer():
         
         for batch, (lr, hr, filename_lr, filename_hr) in enumerate(self.loader_train):
 
+            # import pdb; pdb.set_trace()
             lr, hr = self.prepare([lr, hr])
             timer_data.hold()
             timer_model.tic()
@@ -74,7 +75,9 @@ class Trainer():
             _, ch, _, _ = sr.shape
    
             loss = self.loss(sr, hr)
-              
+          
+            # print(loss.item())
+
             if loss.item() < self.args.skip_threshold * self.error_last:
                 loss.backward()
                 self.optimizer.step()
@@ -84,6 +87,8 @@ class Trainer():
                 ))
 
             timer_model.hold()
+
+            # import pdb; pdb.set_trace()
 
             if (batch + 1) % self.args.print_every == 0:
                 self.ckp.write_log('[{}/{}]\t{}\t{:.1f}+{:.1f}s'.format(
@@ -95,6 +100,8 @@ class Trainer():
 
             timer_data.tic()
             total_train_loss += loss
+
+            # print(loss)
 
         avg_train_loss = total_train_loss / (batch+1)
            
@@ -176,7 +183,7 @@ class Trainer():
                 sr_up_trad = []
                 psnr_dict = defaultdict()
                 lr, hr = self.prepare([lr, hr])
-                #import pdb; pdb.set_trace() 
+                # import pdb; pdb.set_trace() 
                 sr = self.model(lr, self.scale)
                 
                 org_shape = hr.shape
@@ -212,13 +219,16 @@ class Trainer():
 
     def post_process(self, x, org_shape):
         b, ch, h, w = org_shape
-        x = self.normalize(x)
+        x = self.normalize(x) # output get's normalized here
         x = x[:,:,0:h,0:w]
         x = x.permute(0,2,3,1)
 
         # fz_reduction
         x = scalar_last2first(x)
-        x = fz_reduce(x, fcc_syms)
+
+        # Commenting out fz reduction !
+        # x = fz_reduce(x, fcc_syms)
+
         x = scalar_first2last(x)
 
         return x

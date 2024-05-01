@@ -54,6 +54,8 @@ class Loss(nn.modules.loss._Loss):
 
         if args.load != '.': self.load(ckp.dir, cpu=args.cpu)
 
+
+    ## Forward method for calculating loss ##
     def forward(self, sr, hr):
         losses = []
         for i, l in enumerate(self.loss):
@@ -69,6 +71,8 @@ class Loss(nn.modules.loss._Loss):
         if len(self.loss) > 1:
             self.log[-1, -1] += loss_sum.item()
 
+        # print(loss_sum)
+
         return loss_sum
 
     def step(self):
@@ -82,11 +86,14 @@ class Loss(nn.modules.loss._Loss):
     def end_log(self, n_batches):
         self.log[-1].div_(n_batches)
 
-    def display_loss(self, batch):
+    def display_loss(self, batch): # will also work when batch size > 1
+        # import pdb; pdb.set_trace()
         n_samples = batch + 1
         log = []
         for l, c in zip(self.loss, self.log[-1]):
             log.append('[{}: {:.4f}]'.format(l['type'], c / n_samples))
+            # if (c / n_samples < 0.5):
+            #     import pdb; pdb.set_trace()
 
         return ''.join(log)
 
