@@ -171,6 +171,9 @@ class Argparser:
         arg_parser.add_argument('--val_freq', type=int, default=100,
                                 help='number of epochs to train')
 
+
+        arg_parser.add_argument('--prog_patch', action='store_true',
+                                 help='progressive patch size during training') 
   
         return arg_parser 
     

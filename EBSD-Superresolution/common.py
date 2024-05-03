@@ -69,6 +69,35 @@ def get_patch_1D(img_in, img_hr_in, patch_size, scale):
     #return img_ds, img_in
     return img_ds, img_hr_in
 
+def get_prog_patch_1D(img_hr_in, epoch, scale):
+    #import pdb; pdb.set_trace()
+    if epoch <= 200:
+        patch_size = 16
+    elif epoch > 200 and epoch <=400:
+        patch_size = 32
+    elif epoch > 400 and epoch <= 800:
+        patch_size = 64
+    elif epoch > 800:
+        patch_size = 100 
+
+    print("Patch Size:", patch_size)   
+
+    bs, ch, ih, iw = img_hr_in.shape
+    tp = patch_size
+
+    ix = random.randrange(0, iw - tp + 1)
+    iy = random.randrange(0, ih - tp + 1)
+
+    #img_in = img_in[iy:iy + tp, ix:ix + tp, :]
+
+    img_hr_in = img_hr_in[:, :, iy:iy + tp, ix:ix + tp]
+
+    # Downsample
+    img_ds = img_hr_in[:, :, ::scale, :]
+    
+    #return img_ds, img_in
+    return img_ds, img_hr_in
+
 
 def set_channel(l, n_channel):
     def _set_channel(img):

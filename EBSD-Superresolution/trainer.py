@@ -1,6 +1,7 @@
 import os
 import math
 from decimal import Decimal
+import common
 import utility
 import matplotlib
 import matplotlib.pyplot as plt
@@ -64,6 +65,10 @@ class Trainer():
 
             # import pdb; pdb.set_trace()
             lr, hr = self.prepare([lr, hr])
+
+            if self.args.prog_patch:
+                lr, hr = common.get_prog_patch_1D(hr, epoch, self.args.scale)    
+
             timer_data.hold()
             timer_model.tic()
 
