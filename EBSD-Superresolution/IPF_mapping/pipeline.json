@@ -5,7 +5,7 @@
         "Filter_Human_Label": "Read DREAM.3D Data File",
         "Filter_Name": "DataContainerReader",
         "Filter_Uuid": "{043cbde5-3878-5718-958f-ae75714df0df}",
-        "InputFile": "/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/han_rot_dist_approx/results/Test_model_best/Dream3D/x_block_SR.dream3d",
+        "InputFile": "/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/edsr_rot_dist_approx_prog_patch_lr_div_10/results/Test_model_best/Dream3D/x_block_SR.dream3d",
         "InputFileDataContainerArrayProxy": {
             "Data Containers": [
                 {
@@ -157,7 +157,7 @@
         "Filter_Human_Label": "Write DREAM.3D Data File",
         "Filter_Name": "DataContainerWriter",
         "Filter_Uuid": "{3fcd4c43-9d75-5b86-aad4-4441bc914f37}",
-        "OutputFile": "/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/han_rot_dist_approx/results/Test_model_best/Dream3D/x_block_SR.dream3d",
+        "OutputFile": "/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/edsr_rot_dist_approx_prog_patch_lr_div_10/results/Test_model_best/Dream3D/x_block_SR.dream3d",
         "WriteTimeSeries": 0,
         "WriteXdmfFile": 1
     },

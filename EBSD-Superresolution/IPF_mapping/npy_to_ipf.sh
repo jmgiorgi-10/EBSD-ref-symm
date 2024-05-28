@@ -1,6 +1,7 @@
 #!/bin/bash
 
-modelname="han_rot_dist_approx"
+# modelname"edsr_rot_dist_approx_prog_pa"
+modelname='edsr_rot_dist_approx_prog_patch_lr_div_10'
 filetype="SR"
 datasettype=("Test")
 material="Open_718"
@@ -16,7 +17,8 @@ json_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping/pipelin
 home_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping"
 
 # path where numpy files (output of models) are saved
-file_path="/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/han_rot_dist_approx/results"
+file_path="/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/edsr_rot_dist_approx_prog_patch_lr_div_10/results"
+# file_path="/media/hdd3/jmgiorgi/SLERP/Open_718/X4"
 # file_path="/media/hdd3/jmgiorgi/fz_reduced/Open_718/Test/HR_Images"
 
 #path of your source dream3d file as refernece

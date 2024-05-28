@@ -1,3 +1,7 @@
+
+## Implementation of EDSR with spherical linear interpolation,
+## as opposed to pixel shuffle upsampling.
+
 from model import common
 import torch.nn as nn
 
@@ -5,7 +9,7 @@ def make_model(args, parent=False):
     return EDSR(args)
 
 class EDSR(nn.Module):
-    def __init__(self, args, conv=common.default_conv, transp_conv=common.transp_conv):
+    def __init__(self, args, conv=common.3default_conv):
         super(EDSR, self).__init__()
 
         n_resblock = args.n_resblocks
@@ -14,9 +18,6 @@ class EDSR(nn.Module):
         scale = args.scale
         act = nn.ReLU(True)
         
-        # define upsample module
-        m_upsample = [common.Slerp(scale)]
-
         # define head module
         m_head = [conv(args.n_colors, n_feats, kernel_size)]
 
@@ -29,34 +30,23 @@ class EDSR(nn.Module):
         m_body.append(conv(n_feats, n_feats, kernel_size))
 
         # define tail module
-        #####################
-        # No tail required ??
-        # ! SWITCHING OUT PIXEL SHUFFLE UPSAMPLER MODULE WITH A SLERP UPSAMPLER MODULE ! 
-        #####################
-
-        # m_tail = [
-        #     common.Slerp
-        # ]
-
-        m_tail = [transp_conv(n_feats, args.n_colors, kernel_size)]
-
+        m_tail = [
+            common.Upsampler(conv, scale, n_feats, act=False),
+            conv(n_feats, args.n_colors, kernel_size)
+        ]
+ 
         self.head = nn.Sequential(*m_head)
         self.body = nn.Sequential(*m_body)
         self.tail = nn.Sequential(*m_tail)
-        self.upsample = nn.Sequential(*m_upsample)
 
-    # Forward method for the EDSR class
     def forward(self, x):
-        
-        import pdb; pdb.set_trace()
         x = self.head(x)
         res = self.body(x)
         res += x
 
-        x = self.tail(res) # reduce number of channels from 128 to 4
-        x_hr = self.upsample(x) # upsample with slerp
-        import pdb; pdb.set_trace()
-        return x_hr
+        x = self.tail(res)
+ 
+        return x 
 
     def load_state_dict(self, state_dict, strict=True):
         own_state = self.state_dict()

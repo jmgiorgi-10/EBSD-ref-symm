@@ -69,7 +69,7 @@ def get_patch_1D(img_in, img_hr_in, patch_size, scale):
     #return img_ds, img_in
     return img_ds, img_hr_in
 
-def get_prog_patch_1D(img_hr_in, epoch, scale):
+def get_prog_patch_2D(img_hr_in, epoch, scale):
     #import pdb; pdb.set_trace()
     if epoch <= 200:
         patch_size = 16
@@ -93,7 +93,7 @@ def get_prog_patch_1D(img_hr_in, epoch, scale):
     img_hr_in = img_hr_in[:, :, iy:iy + tp, ix:ix + tp]
 
     # Downsample
-    img_ds = img_hr_in[:, :, ::scale, :]
+    img_ds = img_hr_in[:, :, ::scale, ::scale]
     
     #return img_ds, img_in
     return img_ds, img_hr_in

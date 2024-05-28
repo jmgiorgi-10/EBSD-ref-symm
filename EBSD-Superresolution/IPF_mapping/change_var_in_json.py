@@ -49,8 +49,11 @@ print(f'Tupel: {Tupel}')
 filedir = f''
 if (args.file_type == "HR" or args.file_type == "LR" or args.file_type == "hr" or args.file_type == "lr"):
     filedir = f'{args.fpath}/Dream3D/{args.section}_{args.file_type}.dream3d'
-else:
+elif (args.file_type == "SR" or args.file_type == "sr"):
     npy_file_dir = f'{args.fpath}/{args.dataset_type}_model_best'
+    filedir = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
+else: # file_type will equal SLERPED in this case
+    npy_file_dir = f'{args.fpath}'
     filedir = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
 
 #field_dict["0"]["InputFile"] = f'/home/dkjangid/Material_Project/EBSD_Superresolution/{filedir}'

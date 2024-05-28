@@ -67,7 +67,7 @@ class Trainer():
             lr, hr = self.prepare([lr, hr])
 
             if self.args.prog_patch:
-                lr, hr = common.get_prog_patch_1D(hr, epoch, self.args.scale)    
+                lr, hr = common.get_prog_patch_2D(hr, epoch, self.args.scale)    
 
             timer_data.hold()
             timer_model.tic()
@@ -229,7 +229,7 @@ class Trainer():
         x = x.permute(0,2,3,1)
 
         # fz_reduction
-        x = scalar_last2first(x)
+        x = scalar_last2first(x) # standard convention for math, is for the scalar number to be first, then the imaginary components.
 
         # Commenting out fz reduction !
         # x = fz_reduce(x, fcc_syms)

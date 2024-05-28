@@ -1,5 +1,5 @@
 import torch
-from mat_sci_torch_quats.quats import hadamard_prod, outer_prod, misorientation, inverse
+from mat_sci_torch_quats.quats import outer_prod, misorientation, inverse
 
 def normalize(x):
     x_norm = torch.norm(x, dim=-1, keepdim=True)

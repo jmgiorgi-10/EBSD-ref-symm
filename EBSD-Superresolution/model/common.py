@@ -3,7 +3,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+from model.slerp3 import quat_upsampling, quat_upsampling_symm3
 
+def transp_conv(in_channels, out_channels, kernel_size, bias=True):
+    return nn.ConvTranspose2d(
+        in_channels, out_channels, kernel_size,
+        padding=(kernel_size//2), bias=bias)
 
 def default_conv(in_channels, out_channels, kernel_size, bias=True):
     return nn.Conv2d(
@@ -55,6 +60,22 @@ class ResBlock(nn.Module):
 
         return res
 
+class Slerp(nn.Module):
+    def __init__(self, scale):
+        self.scale = scale
+        super(Slerp, self).__init__()
+    
+    def forward(self, x):
+        batch_num = x.shape[0]
+        # inherits 4 quaternion channels, after the 2d transposed convolution
+        sr = torch.zeros(batch_num, 4, self.scale*x.shape[2], self.scale*x.shape[3])
+        for i in range(batch_num):
+            upsampled = quat_upsampling_symm3(x[i,...], self.scale)
+            import pdb; pdb.set_trace()
+            sr[i,...] = upsampled
+
+        return sr
+
 class Upsampler(nn.Sequential):
     def __init__(self, conv, scale, n_feat, bn=False, act=False, bias=True):
 
@@ -80,6 +101,4 @@ class Upsampler(nn.Sequential):
             raise NotImplementedError
 
         super(Upsampler, self).__init__(*m)
-
-
 

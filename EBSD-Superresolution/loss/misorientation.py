@@ -25,10 +25,10 @@ class MisOrientation(nn.Module):
         self.act_loss = ActAndLoss(act, Loss(dist_type, syms), quat_dim=1)
             
     def forward(self, sr, hr):
+
+        import pdb; pdb.set_trace()
+        sr = sr.to(torch.device('cuda:0'))
         loss = self.act_loss(sr, hr)
         loss = torch.mean(loss)
 
-        # if loss < 0.5:
-        #     import pdb; pdb.set_trace()
-        
         return loss

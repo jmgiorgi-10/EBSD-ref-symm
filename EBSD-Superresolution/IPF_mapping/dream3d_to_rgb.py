@@ -19,8 +19,12 @@ if (args.file_type == "HR" or args.file_type == "LR" or args.file_type == "hr" o
     npy_file_dir = f'{args.fpath}'
     file_locs = sorted(glob.glob(f'{args.fpath}/*{args.section}*.npy'))
     dream_3d_file = f'{args.fpath}/Dream3D/{args.section}_{args.file_type}.dream3d'
-else:
+elif (args.file_type == "SR" or args.file_type == "sr"):
     npy_file_dir = f'{args.fpath}/{args.dataset_type}_model_best'
+    file_locs = sorted(glob.glob(f'{npy_file_dir}/*{args.section}*{args.file_type}*.npy'))
+    dream_3d_file = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
+else: # file_type will equal SLERPED in this case
+    npy_file_dir = f'{args.fpath}'
     file_locs = sorted(glob.glob(f'{npy_file_dir}/*{args.section}*{args.file_type}*.npy'))
     dream_3d_file = f'{npy_file_dir}/Dream3D/{args.section}_{args.file_type}.dream3d'
 
