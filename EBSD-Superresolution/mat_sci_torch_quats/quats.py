@@ -144,7 +144,7 @@ def inverse_matrix_generate(q):
 def inverse(q):
         # import pdb; pdb.set_trace()
         magnitudes = torch.norm(q,2,-1)
-        q_inv = q
+        q_inv = q.clone()
         q_inv[...,1:4] = -1 * q[...,1:4]
         q_inv = 1/magnitudes.unsqueeze(-1) * q_inv
 
@@ -223,31 +223,36 @@ def quat_exp2(q, t):
 
         # Quaternion normalization
         device = torch.device('cuda:0')
-        mag = torch.linalg.vector_norm(q,2,-1).unsqueeze(-1)
+        mag = torch.linalg.vector_norm(q.clone(),2,-1).unsqueeze(-1)
+        import pdb; pdb.set_trace()
         mask1 = (torch.all(q != torch.tensor([0,0,0,0],device=device),dim=-1))
 
-        # import pdb; pdb.set_trace()
-
         q[mask1] = q[mask1] / mag[mask1] # use mask to avoid dividing by zero
-        phi = torch.arccos(torch.clamp(q[:,0],min=-1,max=1))
-
+        
+        q0_clamp = q[...,0].clone()
+        q0_clamp = torch.clamp(q0_clamp,min=-1,max=1)
+        phi = torch.arccos(q0_clamp.detach())
+        phi_shape = phi.shape
         # Versor normalization
-        v = q[:,1:4]
+        v = q[...,1:4]
         v_unit = v 
-        mask2 = (torch.all(q[:,1:4] != torch.tensor([0,0,0], device=device),dim=-1))
+        # pdb.set_trace()
+        mask2 = (torch.all(q[...,1:4] != torch.tensor([0,0,0], device=device),dim=-1))
 
         # obtain unit versor (not present in slerp3 code)
         # q[:, 1:4] is not normalized, this should be equivalent to dividing it by sin(theta/2)
         v_unit[mask2] = v[mask2] / torch.linalg.vector_norm(v[mask2],2,-1).unsqueeze(-1)
 
-        slerp_angles = torch.outer(phi, t) # size=[7372, 3]: [# of quats, # of interpolation parameters]
+        pdb.set_trace()
+        slerp_angles = torch.outer(phi.flatten(), t) # size=[7372, 3]: [# of quats, # of interpolation parameters]
+        slerp_angles = slerp_angles.view(list(phi_shape) + list(t.shape))
         cos_slerp = torch.cos(slerp_angles) # size=[7372,3]
         sin_slerp = torch.sin(slerp_angles) # size=[7372,3]
 
-        q_new = torch.zeros([q.shape[0], t.shape[0], 4], device=device)
-
-        q_new[:,:,0] = cos_slerp
-        q_new[:,:,1:4] = v_unit.unsqueeze(1) * sin_slerp.unsqueeze(-1) 
+        q_new = torch.zeros(list(q[...,-1].shape) + list(t.shape) + [4], device=device)
+        pdb.set_trace()
+        q_new[...,0] = cos_slerp
+        q_new[...,1:4] = v_unit.unsqueeze(-2) * sin_slerp.unsqueeze(-1) 
 
         return q_new
 
@@ -279,7 +284,10 @@ def slerp_calc2(q1, q2, t):
         # Check if any nan's are being accidentally created here
         # import pdb; pdb.set_trace()
         # matrix_hamilton_prod(q2, inverse(q1)) may be causing the bug
-        q_slerp = matrix_hamilton_prod(quat_exp2(matrix_hamilton_prod(q2, inverse(q1)), t), q1.unsqueeze(1).repeat(1,3,1))
+
+        import pdb; pdb.set_trace()
+        q_slerp = matrix_hamilton_prod(quat_exp2(matrix_hamilton_prod(q2, inverse(q1)), t), q1.unsqueeze(-2))
+        # q_slerp = matrix_hamilton_prod(quat_exp2(matrix_hamilton_prod(q2, inverse(q1)), t), q1.unsqueeze(1).repeat(1,3,1))
         # import pdb; pdb.set_trace()
         return q_slerp
 

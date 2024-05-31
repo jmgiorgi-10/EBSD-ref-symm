@@ -47,7 +47,6 @@ class EDSR(nn.Module):
 
     # Forward method for the EDSR class
     def forward(self, x):
-        
         import pdb; pdb.set_trace()
         x = self.head(x)
         res = self.body(x)

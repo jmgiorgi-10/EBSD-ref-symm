@@ -5,6 +5,11 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from model.slerp3 import quat_upsampling, quat_upsampling_symm3
 
+def default_pad(input, pad, mode='replicate'):
+    return nn.functional.pad(
+        input, pad, mode
+    )
+
 def transp_conv(in_channels, out_channels, kernel_size, bias=True):
     return nn.ConvTranspose2d(
         in_channels, out_channels, kernel_size,
@@ -68,11 +73,14 @@ class Slerp(nn.Module):
     def forward(self, x):
         batch_num = x.shape[0]
         # inherits 4 quaternion channels, after the 2d transposed convolution
-        sr = torch.zeros(batch_num, 4, self.scale*x.shape[2], self.scale*x.shape[3])
+        sr = torch.zeros(batch_num, 4, self.scale*x.shape[2]-(self.scale-1), self.scale*x.shape[3]-(self.scale-1))
+
         for i in range(batch_num):
             upsampled = quat_upsampling_symm3(x[i,...], self.scale)
             import pdb; pdb.set_trace()
             sr[i,...] = upsampled
+        import pdb; pdb.set_trace()
+        sr = default_pad(sr, [0, 3, 0, 3], 'replicate') 
 
         return sr
 

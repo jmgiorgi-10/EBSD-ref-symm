@@ -118,7 +118,7 @@ class Loss:
                 ## TRAINING
                 # editing function to return to sample frame of reference and compare to HR
                 if self.dist_type == 'rot_dist_approx':
-                        # import pdb; pdb.set_trace()
+                        import pdb; pdb.set_trace()
                         # function below uses torch.no_grad, so q1 and q2 are still leaves (grad not calculated in backwards pass)
                         R_min = transformation_matrix_tensor(q1, q2, fcc_syms)
 

@@ -66,13 +66,21 @@ def slerp(q1, q2, t):
 
 def slerp2(q1, q2, t, syms):
 
+    # import pdb; pdb.set_trace()
+
     syms = syms.to(torch.device('cuda:0'))
 
     A = matrix_hamilton_prod(q1, inverse(q2)) # transformation from crystal frame 1, to crystal frame 2
     A_syms = outer_prod(A, syms) # symmetry equivalent transformations
-    A_syms *= torch.sign(A_syms[...,:1]) # ensure we are on 
+    A_syms *= torch.sign(A_syms[...,:1]) # ensure we are on postivie hemishpere
+
+    A_syms = A_syms.view(-1,24,4)
     a_min_indices = torch.max(A_syms[...,0],-1)[1]
-    A_min = A_syms[torch.arange(len(A_syms)), a_min_indices]
+    a_min_indices_flat = a_min_indices.view(-1)
+    A_min = A_syms[torch.arange(len(A_syms)), a_min_indices_flat]
+
+    import pdb; pdb.set_trace()
+    A_min = A_min.reshape(A.shape)
 
     qs = inverse(matrix_hamilton_prod(inverse(q1), A_min))
     q3 = slerp_calc2(q1, qs, t)
@@ -81,62 +89,68 @@ def slerp2(q1, q2, t, syms):
 
 def quat_upsampling_symm3(X, scale=4):
 
+    torch.autograd.set_detect_anomaly(True)
     X = X.permute(1,2,0)
     device = torch.device('cuda:0')
 
     interp_rows = (scale-1)*(X.shape[0]-1)
     interp_cols = (scale-1)*(X.shape[1]-1)
 
-    X_scaled = torch.zeros((scale*X.shape[0], scale*X.shape[1], 4), dtype=X.dtype, device=device)
-    X_scaled[::scale, ::scale, :] = X
+    X_scaled = torch.zeros((scale*X.shape[0] - (scale-1), scale*X.shape[1] - (scale-1), 4), dtype=X.dtype, device=device)
+
+    Z = X.clone() # (Hopefully) AVOID IN-PLACE OPERATIONS
+
+    X_scaled[::scale, ::scale, :] = Z
+
+    # with torch.no_grad():
+    #     X_scaled[range(X_scaled.shape[0] - scale + 1, X_scaled.shape[0], 1),:,:] = 0.2*torch.ones(X_scaled[range(X_scaled.shape[0] - scale + 1, X_scaled.shape[0], 1),:,:].shape, device = torch.device('cuda:0'), requires_grad=False)
 
     delta_t = 1 / scale
     t = torch.tensor([delta_t * k for k in range(1, scale)], device=device) # try to make 't' outer product friendly
     q1 = torch.tensor([], device=device); q2 = torch.tensor([], device=device)
 
-    # perform slerp column-wise
-    # for j in range(X.shape[1]-1):
-    # import pdb; pdb.set_trace() 
     for j in range(X.shape[1]-1):
-        q1 = torch.cat([q1, X[:,j,:]])
-        q2 = torch.cat([q2, X[:,j+1,:]])
+        q1 = torch.cat([q1, Z[:,j,:]])
+        q2 = torch.cat([q2, Z[:,j+1,:]])
 
     q_interp_cols = slerp2(q1, q2, t, fcc_syms) # seems like there are no NaN values here.
     q_interp_cols = q_interp_cols.reshape(-1,X.shape[0],3,4)
-    import pdb; pdb.set_trace() 
+    # import pdb; pdb.set_trace() 
     # dimensions should be the amount of interpolation pairs, rows, interpolations per pair, 4
 
     for i in range(q_interp_cols.shape[0]): # looping through all interpolations pairs
-            indices2 = range(scale*i + 1, scale*i + scale, 1)
-            X_scaled[::scale, indices2, :] = q_interp_cols[i,:,:,:]
-
-    ## Check if individual columns of X_scaled are completely filled --> looks like Yes.
-    import pdb; pdb.set_trace()
-    if (X.shape[1] % 2 == 0):
-        X_scaled[::scale, range(X_scaled.shape[1] - scale + 1, X_scaled.shape[1], 1), :] = X_scaled[::scale, X_scaled.shape[1] - scale,:].unsqueeze(1)
+        indices2 = range(scale*i + 1, scale*i + scale, 1)
+        X_scaled[::scale, indices2, :] = q_interp_cols[i,...]
 
     # Now, perform row-based interplation
-    q1 = torch.tensor([], device=device); q2 = torch.tensor([], device=device)
-    for i in range(X.shape[0]-1):
-            q1 = torch.cat([q1, X_scaled[i*scale,:,:]])
-            q2 = torch.cat([q2, X_scaled[(i+1)*scale,:,:]])
+    q3 = torch.tensor([], device=device); q4 = torch.tensor([], device=device)
 
-    q_interp_rows = slerp2(q1, q2, t, fcc_syms)
+    import pdb; pdb.set_trace()
+# with torch.no_grad():
+    Z_scaled = X_scaled.clone()
+    for i in range(X.shape[0]-1):
+        q3 = torch.cat([q3, Z_scaled[scale*j,...]])
+        q4 = torch.cat([q4, Z_scaled[scale*(j+1),...]])
+
+    # BACKTRACE INDICATES THAT IN-PLACE OPERATION OCCURS in the backpropagation of the calculation of q3
+    q_interp_rows = slerp2(q3, q4, t, fcc_syms)
     q_interp_rows = q_interp_rows.reshape(-1,X_scaled.shape[1],3,4)
+    pdb.set_trace()
     q_interp_rows = torch.movedim(q_interp_rows, 2, 1)
 
-    for i in range(q_interp_rows.shape[0]): # looping through all interpolations pairs
-            indices2 = range(scale*i + 1, scale*i+scale, 1)
-            X_scaled[indices2, :, :] = q_interp_rows[i,:,:,:]
- 
-    # Re-permute dimensions order to [channel, width, height], as per PyTorch convention
     import pdb; pdb.set_trace()
+    for i in range(q_interp_rows.shape[0]): # looping through all interpolations pairs
+        print(i)
+        indices2 = range(scale*i + 1, scale*i + scale, 1)
+        X_scaled[indices2,...] = q_interp_rows[i,...] # should fill all columns
+    
     X_scaled = X_scaled.permute(2, 0, 1)
+    import pdb; pdb.set_trace()
 
     return X_scaled
 
 # Bi-linear quaternion upsampling #
-def quat_upsampling(X, scale=4): # X is low-resolution numpy-array
+def quat_upsampling(X, scale=4): # X is low-resoluticon numpy-array)
         
         # import pdb; pdb.set_trace()
         # X = permute_X(X) # convert from quaternion scalar_last convention to scalar_first.
