@@ -31,21 +31,20 @@ class EBSD_Ti64DIC_dataset(data.Dataset):
         self.root_lr = root_lr
         self.root_hr = root_hr
         # 
-        self.data_lr_files = sorted(glob.glob(f'{root_lr}/*.npy')) if root_lr is not None else None 
-        self.data_hr_files = sorted(glob.glob(f'{root_hr}/*.npy'))
+        self.data_lr_files = sorted(glob.glob(f'{root_lr}/*Ti64*.npy')) if root_lr is not None else None 
+        self.data_hr_files = sorted(glob.glob(f'{root_hr}/*Ti64*.npy'))
         self.is_Train = is_Train
         
     def load_file(self, filepath_lr, filepath_hr):
         
         # Load Numpy files
-             
         if self.is_Train:
             hr = np.load(f'{filepath_hr}')
             lr = np.load(f'{filepath_lr}') if filepath_lr is not None else None
             lr, hr = self._get_patch(lr, hr, self.args.patch_size)
 
         else: 
-            lr =  np.load(f'{filepath_lr}')
+            lr = np.load(f'{filepath_lr}')
             hr = np.load(f'{filepath_hr}')
 
         lr, hr = common.set_channel([lr, hr], self.args.n_colors)
@@ -73,8 +72,6 @@ class EBSD_Ti64DIC_dataset(data.Dataset):
 
 class Misorientation_dist:
     def __init__(self, args, dist_type = 'rot_dist', act = None, syms_req = True):
-
-        # dist_type = args.dist_type
         
         print(f'Parameters for Misorientation Distance')
         print('+++++++++++++++++++++++++++++++++++++++++')
@@ -84,21 +81,19 @@ class Misorientation_dist:
         from mat_sci_torch_quats.losses import ActAndLoss, Loss
         from mat_sci_torch_quats.symmetries import hcp_syms, fcc_syms
 
-        if args.syms == 'fcc':
-            syms = fcc_syms
-        elif args.syms == 'hcp':
-            syms = hcp_syms
-        else:
-            syms = None
+        # if args.syms == 'fcc':
+        #     syms = fcc_syms
+        # elif args.syms == 'hcp':
+        #     syms = hcp_syms
+        # else:
+        #     syms = None
         
-        self.act_loss = ActAndLoss(act, Loss(dist_type, syms), quat_dim=-1) # by this point, the quaternion channels have already been moved to the last data tensor dimension.
+        self.act_loss = ActAndLoss(act, Loss(dist_type, args.syms), quat_dim=-1) # by this point, the quaternion channels have already been moved to the last data tensor dimension.
             
     def __call__(self, sr, hr):
         loss = self.act_loss(sr, hr)
         return loss
 
-
- 
 class timer():
     def __init__(self):
         self.acc = 0
@@ -252,6 +247,7 @@ class checkpoint():
                     fig.suptitle(f'{dataset} data: Filename:{file_name}_{channel}' , fontweight ="bold")
 
                     for a, img, title in zip(axes.reshape(-1), save_list, postfix):
+                        # import pdb; pdb.set_trace()
                         img_arr = img[idx].cpu().numpy()
                         if ch_num == 0: # save only one time 
                             np.save(f'{filename}_{title}.npy', img_arr)
@@ -276,8 +272,6 @@ def quantize(img, rgb_range):
     pixel_range = 255 / rgb_range
     return img.mul(pixel_range).clamp(0, 255).round().div(pixel_range)
 
-
-
 def calculate_psnr(img1, img2):
     # img1 and img2 have range [0, 255]
     img1 = img1.astype(np.float64)
@@ -286,7 +280,6 @@ def calculate_psnr(img1, img2):
     if mse == 0:
         return float("inf")
     return 20 * math.log10(255.0 / math.sqrt(mse))
-
 
 def ssim(img1, img2):
     C1 = (0.01 * 255) ** 2
@@ -328,7 +321,6 @@ def calculate_ssim(img1, img2):
     else:
         raise ValueError("Wrong input image dimensions.")
 
-
 def calc_psnr_quat(dist, rgb_range):
     dist = dist / rgb_range
     #rmse = (dist**2).mean().sqrt()
@@ -336,7 +328,6 @@ def calc_psnr_quat(dist, rgb_range):
     ps = 20*torch.log10(1/dist)
 
     return ps
-
 
 def make_optimizer(args, my_model):
     trainable = filter(lambda x: x.requires_grad, my_model.parameters())
@@ -384,4 +375,3 @@ def make_scheduler(args, my_optimizer):
         )
 
     return scheduler
-

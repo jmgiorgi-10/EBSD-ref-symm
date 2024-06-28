@@ -73,13 +73,13 @@ class Slerp(nn.Module):
     def forward(self, x):
         batch_num = x.shape[0]
         # inherits 4 quaternion channels, after the 2d transposed convolution
-        sr = torch.zeros(batch_num, 4, self.scale*x.shape[2]-(self.scale-1), self.scale*x.shape[3]-(self.scale-1))
+        device=torch.device('cuda:0')
+        sr = torch.zeros(batch_num, 4, self.scale*x.shape[2]-(self.scale-1), self.scale*x.shape[3]-(self.scale-1),device=device)
 
         for i in range(batch_num):
             upsampled = quat_upsampling_symm3(x[i,...], self.scale)
-            import pdb; pdb.set_trace()
             sr[i,...] = upsampled
-        import pdb; pdb.set_trace()
+
         sr = default_pad(sr, [0, 3, 0, 3], 'replicate') 
 
         return sr

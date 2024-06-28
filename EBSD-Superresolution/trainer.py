@@ -203,7 +203,6 @@ class Trainer():
                         sr_up = self.post_process(sr_up, org_shape)
                         sr_up_trad.append(sr_up)
             
-       
                 sr = self.post_process(sr, org_shape)
                 
                 #import pdb; pdb.set_trace()
@@ -272,7 +271,6 @@ class Trainer():
             #epoch = self.scheduler.last_epoch + 1
             epoch = self.epoch + 1
             return epoch >= self.args.epochs
-
 
     def is_val(self):
         epoch = self.epoch 

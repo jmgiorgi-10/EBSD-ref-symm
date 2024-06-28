@@ -100,44 +100,48 @@ def safe_arccos(x):
     output = mask*output_arccos + (1-mask)*output_linear
     return output
 
-# for loss transformation, q1 is the nn output, and q2 is the respective hr pixel
+# Generate the minimum angle transformation with PyTorch, to enable automatic differentiation
 def transformation_matrix_tensor(q1, q2, syms):
 
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         
         syms = syms.to(torch.device('cuda:0'))
         inv = inverse_matrix_generate(q1) # only uses q1 to obtain tensor shape.
 
         q1_inv = q1 * inv
         q2_inv = q2 * inv
-        R = matrix_hamilton_prod(q1, q2_inv)
-        R_syms = outer_prod(R, syms)
-        R_syms = R_syms.view(-1, 24, 4)
+        T = matrix_hamilton_prod(q1, q2_inv)
 
-        theta = torch.arccos(R_syms[...,0])
+        T_syms = outer_prod(T, syms)
+        T_syms = T_syms.view(-1, syms.shape[0], 4)
+
+        theta = torch.arccos(T_syms[...,0])
         min_ind = theta.min(-1)[1] # still differentiable --> gradient flows through only for min.
         min_ind_flat = min_ind.view(-1)
 
-        R_min = R_syms[torch.arange(len(R_syms)), min_ind_flat]
-        R_min = R_min.reshape(q1.shape)
+        try:
+                # import pdb; pdb.set_trace()
+                T_min = T_syms[torch.arange(len(T_syms)), min_ind_flat]
 
-        q_loss_inv = matrix_hamilton_prod(q1_inv, R_min) ## Perhaps the error is here, can't backpropagate current inverse function applied to q_nn.
+        except RuntimeError as e:
+                print('broadcasting issue \n')
+                import pdb; pdb.set_trace()
+
+        T_min = T_min.reshape(q1.shape)
+
+        q_loss_inv = matrix_hamilton_prod(q1_inv, T_min) ## Perhaps the error is here, can't backpropagate current inverse function applied to q_nn.
         q_loss = q_loss_inv * inv
 
-        return R_min
+        return T_min
 
-# generate an inverse matrix for the size of input matrix
+# Generate an "inverse-creating" tensor (will generate an inverse when multiplied with quaternion orientation tensor) required for the size of input matrix
 def inverse_matrix_generate(q):
 
         data_shape = q.shape
-
         magnitudes = torch.norm(q,2,-1)
-
         inverse_matrix = torch.ones(data_shape, device=torch.device('cuda:0'))
         inverse_matrix[...,1:4] = -1 * inverse_matrix[...,1:4]
-
         inverse_matrix = 1/magnitudes.unsqueeze(-1) * inverse_matrix
-
         return inverse_matrix
 
 ## ! issue was likely here, make sure this is performed as differentiable matrix operation
@@ -188,28 +192,33 @@ def rot_dist(q1,q2=None):
 # Calculates minimum symmetry misorientation of all pixels
 def rot_dist_relative(q1, q2, syms):
 
-        R = matrix_hamilton_prod(q1, inverse(q2))
-        R_syms = outer_prod(R, syms)
-        R_syms = R_syms.view(-1, 24, 4)
+        # import pdb; pdb.set_trace()
+        device = torch.device('cuda:0')
 
-        theta = torch.arccos(R_syms[...,0])
+        q1 = q1.to(device)
+        # q2 = q2.to(device)
+        T = matrix_hamilton_prod(q1, inverse(q2.to(device)))
+        T_syms = outer_prod(T, syms)
+        T_syms = T_syms.view(-1, syms.shape[0], 4)
+
+        theta = torch.arccos(T_syms[...,0])
         min_ind = theta.min(-1)[1]
 
         # theta_min = theta[torch.arange(len(theta)), min_ind]
         # import pdb; pdb.set_trace()
-        R_min = R_syms[torch.arange(len(R_syms)), min_ind]
-        R_min = R_min.reshape(q1.shape)
+        T_min = T_syms[torch.arange(len(T_syms)), min_ind]
+        T_min = T_min.reshape(q1.shape)
 
         zero_broadcast_tensor = torch.Tensor([1,0,0,0])
         zero_broadcast_tensor = zero_broadcast_tensor.reshape(1,1,1,4).to(torch.device('cuda:0'))
 
-        q_loss = inverse(matrix_hamilton_prod(inverse(q1), R_min))
+        q_loss = inverse(matrix_hamilton_prod(inverse(q1), T_min))
         # added fz reduction, with the intention of checking if this reduces the euclidean distance calc.
         q_loss_fz = fz_reduce(q_loss, syms)
         # COULD THE ERROR BE SOMEWHERE HERE, BELOW?:
         # euclid_dist = torch.linalg.norm(q_loss - q2,2,dim=-1)
         # euclid_dist = torch.linalg.norm(q_loss_fz - q2, 2, dim=-1)
-        euclid_dist = torch.linalg.norm(R_min - zero_broadcast_tensor, 2, dim=-1)
+        euclid_dist = torch.linalg.norm(T_min - zero_broadcast_tensor, 2, dim=-1)
         # import pdb; pdb.set_trace() ## WHY DID I PLACE A 0 INDEX?
         dist = 4*torch.arcsin(euclid_dist / 2)
    
@@ -219,12 +228,9 @@ def rot_dist_relative(q1, q2, syms):
 # you need to understand 
 def quat_exp2(q, t):
 
-        # import pdb; pdb.set_trace()
-
         # Quaternion normalization
         device = torch.device('cuda:0')
         mag = torch.linalg.vector_norm(q.clone(),2,-1).unsqueeze(-1)
-        import pdb; pdb.set_trace()
         mask1 = (torch.all(q != torch.tensor([0,0,0,0],device=device),dim=-1))
 
         q[mask1] = q[mask1] / mag[mask1] # use mask to avoid dividing by zero
@@ -243,14 +249,12 @@ def quat_exp2(q, t):
         # q[:, 1:4] is not normalized, this should be equivalent to dividing it by sin(theta/2)
         v_unit[mask2] = v[mask2] / torch.linalg.vector_norm(v[mask2],2,-1).unsqueeze(-1)
 
-        pdb.set_trace()
         slerp_angles = torch.outer(phi.flatten(), t) # size=[7372, 3]: [# of quats, # of interpolation parameters]
         slerp_angles = slerp_angles.view(list(phi_shape) + list(t.shape))
         cos_slerp = torch.cos(slerp_angles) # size=[7372,3]
         sin_slerp = torch.sin(slerp_angles) # size=[7372,3]
 
         q_new = torch.zeros(list(q[...,-1].shape) + list(t.shape) + [4], device=device)
-        pdb.set_trace()
         q_new[...,0] = cos_slerp
         q_new[...,1:4] = v_unit.unsqueeze(-2) * sin_slerp.unsqueeze(-1) 
 
@@ -272,7 +276,6 @@ def quat_exp(q, t):
 # I think I have to add parallel slerp instead, since q1 and q2 contain multiple values
 # Parallel slerp calculation
 def slerp_calc2(q1, q2, t):
-        # import pdb; pdb.set_trace()
         # edited to unsqueeze q1 in dim=1, to render it broadcastable with the exponentiated quaternion for various values of interpolation parameter 't'
 
         # if q2 = None, we want to slerp only with respect to the axis formed by the first quaternion with respect to Theta = 0.
@@ -285,10 +288,8 @@ def slerp_calc2(q1, q2, t):
         # import pdb; pdb.set_trace()
         # matrix_hamilton_prod(q2, inverse(q1)) may be causing the bug
 
-        import pdb; pdb.set_trace()
-        q_slerp = matrix_hamilton_prod(quat_exp2(matrix_hamilton_prod(q2, inverse(q1)), t), q1.unsqueeze(-2))
+        q_slerp = matrix_hamilton_prod(quat_exp2(matrix_hamilton_prod(q1, inverse(q2)), t), q1.unsqueeze(-2))
         # q_slerp = matrix_hamilton_prod(quat_exp2(matrix_hamilton_prod(q2, inverse(q1)), t), q1.unsqueeze(1).repeat(1,3,1))
-        # import pdb; pdb.set_trace()
         return q_slerp
 
 # Single quaternion slerp calculation
@@ -308,7 +309,6 @@ def fz_reduce(q,syms):
         q_fz *= torch.sign(q_fz[...,:1])
         q_fz = q_fz.reshape(shape)
         return q_fz
-
 
 def scalar_first2last(X):
         return torch.roll(X,-1,-1)
@@ -335,8 +335,6 @@ def rotate(q,points,element_wise=False):
                                 (None,)*(len(P.shape)) + (slice(None),)
                 X_out = (vec2mat(X_int) * conj(q)[inds]).sum(-1)
         return X_out[...,1:]
-
-
 
 # A simple script to test the quats class for numpy and torch
 if __name__ == '__main__':

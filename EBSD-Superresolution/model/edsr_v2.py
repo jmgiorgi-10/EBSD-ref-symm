@@ -1,4 +1,5 @@
 from model import common
+import torch
 import torch.nn as nn
 
 def make_model(args, parent=False):
@@ -8,7 +9,7 @@ class EDSR(nn.Module):
     def __init__(self, args, conv=common.default_conv, transp_conv=common.transp_conv):
         super(EDSR, self).__init__()
 
-        n_resblock = args.n_resblocks
+        n_resblock = args.n_resblocks # by default, there are 20 residual blocks.
         n_feats = args.n_feats
         kernel_size = 3 
         scale = args.scale
@@ -28,36 +29,27 @@ class EDSR(nn.Module):
         ]
         m_body.append(conv(n_feats, n_feats, kernel_size))
 
-        m_tail = [
-            common.Upsampler(conv, scale, n_feats, act=False),
-            conv(n_feats, args.n_colors, kernel_size)
-        ]
- 
-        # define tail module
-        #####################
-        # No tail required ??
-        # ! SWITCHING OUT PIXEL SHUFFLE UPSAMPLER MODULE WITH A SLERP UPSAMPLER MODULE ! 
-        #####################
-
-        # m_tail = [
-        #     common.Slerp
-        # ]
-
-        # m_tail = [transp_conv(n_feats, args.n_colors, kernel_size)]
+        m_tail = [transp_conv(n_feats, args.n_colors, kernel_size)]
 
         self.head = nn.Sequential(*m_head)
         self.body = nn.Sequential(*m_body)
         self.tail = nn.Sequential(*m_tail)
-        # self.upsample = nn.Sequential(*m_upsample)
+        self.upsample = nn.Sequential(*m_upsample)
 
     # Forward method for the EDSR class
     def forward(self, x):
+        
+        # import pdb; pdb.set_trace()
+
+        x = x.to(torch.device('cuda:0'))
+        x = self.upsample(x) # upsample with slerp
+        # pdb.set_trace()
         x = self.head(x)
         res = self.body(x)
         res += x
 
-        x = self.tail(res)
-
+        x = self.tail(res) # reduce number of channels from 128 to 4
+        # x_hr = self.upsample(x) # upsample with slerp
         return x
 
     def load_state_dict(self, state_dict, strict=True):

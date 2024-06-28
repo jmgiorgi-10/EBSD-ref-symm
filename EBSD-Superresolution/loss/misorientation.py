@@ -18,15 +18,13 @@ class MisOrientation(nn.Module):
         from mat_sci_torch_quats.symmetries import hcp_syms, fcc_syms
 
         if syms_req:
-            syms = fcc_syms
+            syms = args.syms
         else:
             syms = None
         
         self.act_loss = ActAndLoss(act, Loss(dist_type, syms), quat_dim=1)
             
     def forward(self, sr, hr):
-
-        import pdb; pdb.set_trace()
         sr = sr.to(torch.device('cuda:0'))
         loss = self.act_loss(sr, hr)
         loss = torch.mean(loss)

@@ -79,7 +79,6 @@ def slerp2(q1, q2, t, syms):
     a_min_indices_flat = a_min_indices.view(-1)
     A_min = A_syms[torch.arange(len(A_syms)), a_min_indices_flat]
 
-    import pdb; pdb.set_trace()
     A_min = A_min.reshape(A.shape)
 
     qs = inverse(matrix_hamilton_prod(inverse(q1), A_min))
@@ -125,27 +124,27 @@ def quat_upsampling_symm3(X, scale=4):
     # Now, perform row-based interplation
     q3 = torch.tensor([], device=device); q4 = torch.tensor([], device=device)
 
-    import pdb; pdb.set_trace()
 # with torch.no_grad():
     Z_scaled = X_scaled.clone()
-    for i in range(X.shape[0]-1):
+    # import pdb; pdb.set_trace()
+
+    for j in range(X.shape[0]-1):
+        if scale*(j+1) > Z_scaled.shape[0]:
+            import pdb; pdb.set_trace()
         q3 = torch.cat([q3, Z_scaled[scale*j,...]])
         q4 = torch.cat([q4, Z_scaled[scale*(j+1),...]])
 
     # BACKTRACE INDICATES THAT IN-PLACE OPERATION OCCURS in the backpropagation of the calculation of q3
     q_interp_rows = slerp2(q3, q4, t, fcc_syms)
     q_interp_rows = q_interp_rows.reshape(-1,X_scaled.shape[1],3,4)
-    pdb.set_trace()
+   
     q_interp_rows = torch.movedim(q_interp_rows, 2, 1)
 
-    import pdb; pdb.set_trace()
     for i in range(q_interp_rows.shape[0]): # looping through all interpolations pairs
-        print(i)
         indices2 = range(scale*i + 1, scale*i + scale, 1)
         X_scaled[indices2,...] = q_interp_rows[i,...] # should fill all columns
     
     X_scaled = X_scaled.permute(2, 0, 1)
-    import pdb; pdb.set_trace()
 
     return X_scaled
 

@@ -96,7 +96,7 @@ class Edge_Loss:
 class Loss:
         """ Wrapper for loss. Inclues option for symmetry as well """
         def __init__(self,dist_func,syms=None):
-                # import pdb; pdb.set_trace()
+                import pdb; pdb.set_trace()
                 self.dist_type = dist_func
                 if dist_func == 'l1':
                     self.dist_func = l1 
@@ -105,36 +105,38 @@ class Loss:
                 elif dist_func == 'rot_dist':
                 #     import pdb; pdb.set_trace()
                     self.dist_func = rot_dist_relative # GETS CALLED DURING VALIDATION
-                elif dist_func == 'rot_dist_approx':
+                elif dist_func == 'minimum_angle_transformation':
                 #     import pdb; pdb.set_trace()
                     self.dist_func = RotDistLoss() # GETS CALLED DURING TRAINING
-                elif dist_func == 'rot_dist_relative':
-                    self.dist_func = RotDistRelative(fcc_syms)
-                self.syms = syms
+                # elif dist_func == 'rot_dist_relative':
+                #     self.dist_func = RotDistRelative(fcc_syms)
+
+                pdb.set_trace()
+
+                if (syms == 'fcc'):
+                      self.syms = fcc_syms
+                elif (syms == 'hcp'):
+                      self.syms = hcp_syms
+                else:
+                      print("no symmetry was specified")
+
+                self.syms = self.syms.to(torch.device('cuda:0'))
+             
                 #self.quat_dim = quat_dim
 
         def __call__(self,q1,q2):   
             
                 ## TRAINING
-                # editing function to return to sample frame of reference and compare to HR
-                if self.dist_type == 'rot_dist_approx':
-                        import pdb; pdb.set_trace()
+                if self.dist_type == 'minimum_angle_transformation':
                         # function below uses torch.no_grad, so q1 and q2 are still leaves (grad not calculated in backwards pass)
-                        R_min = transformation_matrix_tensor(q1, q2, fcc_syms)
-
+                        T_min = transformation_matrix_tensor(q1, q2, self.syms)
                         zero_broadcast_tensor = torch.Tensor([1,0,0,0])
                         zero_broadcast_tensor = zero_broadcast_tensor.reshape(1,1,1,4) 
+                        return self.dist_func(T_min, zero_broadcast_tensor)
 
-                        import pdb; pdb.set_trace()
-
-                        return self.dist_func(R_min, zero_broadcast_tensor)
-                        # return self.dist_func(q_loss, q2)
-
-                ## VALIDATIONc
+                ## VALIDATION
                 else:
                         # import pdb; pdb.set_trace()
-                        self.syms = fcc_syms
-                        self.syms = self.syms.to(torch.device('cuda:0')) 
                         return self.dist_func(q1, q2, self.syms)
 
         def __str__(self):
@@ -158,7 +160,6 @@ def tanhc(x):
         # use taylor series if x is close to 0, otherwise, use tanh(x)/x
         output = mask*output_ts + (1-mask)*output_ht
         return output
-
 
 def tanh_act(q):
         """ Scale a vector q such that ||q|| = tanh(||q||) """

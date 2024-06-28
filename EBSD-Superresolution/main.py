@@ -55,6 +55,7 @@ if checkpoint.ok:
 
     model = model.Model(args, checkpoint)
     device = torch.device('cuda:0')
+
     model = model.to(device) # send the model to gpu
             
     loss = loss.Loss(args, checkpoint) if not args.test_only else None 
