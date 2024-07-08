@@ -15,8 +15,9 @@ npy_file_dir = f''
 file_locs = []
 if (args.file_type == "hr" or args.file_type == "lr" or args.file_type == "HR" or args.file_type == "LR"):
     npy_file_dir = f'{args.fpath}'
-    file_locs = sorted(glob.glob(f'{npy_file_dir}/*{args.file_type}*{args.section}*.npy'))
+    file_locs = sorted(glob.glob(f'{npy_file_dir}/*{args.section}*{args.file_type}*.npy'))
 elif (args.file_type == "SR" or args.file_type == "sr"):
+    pdb.set_trace()
     npy_file_dir = f'{args.fpath}/{args.dataset_type}_model_best'
     file_locs = sorted(glob.glob(f'{npy_file_dir}/*{args.section}*{args.file_type}*.npy'))
 else: # file_type will equal SLERPED in this case

@@ -1,9 +1,11 @@
 import torch
-from mat_sci_torch_quats.quats import fz_reduce, normalize, rand_quats, outer_prod, rot_dist, rot_dist_relative, scalar_first2last,  scalar_last2first, misorientation, inverse, transformation_matrix_tensor, misorientation
+from mat_sci_torch_quats.quats import fz_reduce, normalize, rand_quats, outer_prod, rot_dist, validation_min_angle_transformation, scalar_first2last,  scalar_last2first, misorientation, inverse, transformation_matrix_tensor, misorientation
 from mat_sci_torch_quats.rot_dist_approx import RotDistLoss, RotDistRelative
 from mat_sci_torch_quats.symmetries import fcc_syms, hcp_syms
 import torch.nn as nn
 import torch.nn.functional as F
+
+
 
 
 def l1(q1,q2):
@@ -104,17 +106,16 @@ class Loss:
                     self.dist_func = l2
                 elif dist_func == 'rot_dist':
                 #     import pdb; pdb.set_trace()
-                    self.dist_func = rot_dist_relative # GETS CALLED DURING VALIDATION
+                    self.dist_func = validation_min_angle_transformation # GETS CALLED DURING VALIDATION
                 elif dist_func == 'minimum_angle_transformation':
                 #     import pdb; pdb.set_trace()
                     self.dist_func = RotDistLoss() # GETS CALLED DURING TRAINING
-                # elif dist_func == 'rot_dist_relative':
-                #     self.dist_func = RotDistRelative(fcc_syms)
-
-                pdb.set_trace()
+                elif dist_func == 'rot_dist_approx':
+                    self.dist_func = RotDistLoss()
 
                 if (syms == 'fcc'):
                       self.syms = fcc_syms
+                      
                 elif (syms == 'hcp'):
                       self.syms = hcp_syms
                 else:
@@ -126,17 +127,26 @@ class Loss:
 
         def __call__(self,q1,q2):   
             
-                ## TRAINING
                 if self.dist_type == 'minimum_angle_transformation':
-                        # function below uses torch.no_grad, so q1 and q2 are still leaves (grad not calculated in backwards pass)
+                        ## Training with the minimum_angle_transformation based loss-function
                         T_min = transformation_matrix_tensor(q1, q2, self.syms)
                         zero_broadcast_tensor = torch.Tensor([1,0,0,0])
                         zero_broadcast_tensor = zero_broadcast_tensor.reshape(1,1,1,4) 
                         return self.dist_func(T_min, zero_broadcast_tensor)
-
-                ## VALIDATION
+                elif self.dist_type == 'rot_dist_approx':
+                        ## Training with rotational distance approximation (minimum series transformation)
+                        self.syms = self.syms.cuda()
+                        q1_w_syms = outer_prod(q1,self.syms)
+                        if q2 is not None: q2 = q2[...,None,:]
+                        dists = self.dist_func(q1_w_syms,q2)
+                        dist_min = dists.min(-1)[0]
+                        return dist_min      
+                        # T_series_min = rot_dist(q1, q2, self.syms)
+                        # zero_broadcast_tensor = torch.Tensor([1,0,0,0])
+                        # zero_broadcast_tensor = zero_broadcast_tensor.reshape(1,1,1,4) 
+                        # return self.dist_func(T_min, zero_broadcast_tensor)
                 else:
-                        # import pdb; pdb.set_trace()
+                        ## Validation
                         return self.dist_func(q1, q2, self.syms)
 
         def __str__(self):
@@ -174,13 +184,14 @@ def safe_divide_act(q,eps=10**-5):
         # 
 class ActAndLoss:
         """ Wraps together activation and loss """
-        def __init__(self,act,loss, quat_dim=-1):
+        def __init__(self, act, loss, quat_dim=-1):
                 self.act = act
                 self.loss = loss
                 self.quat_dim = quat_dim
+
         def __call__(self,X,labels):
                 # change to [b, ch, h, w] to [b, h, w, ch]
-                #import pdb; pdb.set_trace()
+                import pdb; pdb.set_trace()
                 X = torch.movedim(X,self.quat_dim,-1)
                 labels = torch.movedim(labels,self.quat_dim,-1) # make sure quat element channels are placed in last dimension
                 # scalar first convention for outer product
@@ -192,6 +203,7 @@ class ActAndLoss:
                 elif self.act is None:
                     X_act = X 
                 return self.loss(X_act,labels)
+        
         def __str__(self):
                 return f'Act and Loss: ({self.act},{self.loss})'
 

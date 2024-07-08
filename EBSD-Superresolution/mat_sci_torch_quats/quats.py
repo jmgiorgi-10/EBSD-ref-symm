@@ -103,17 +103,25 @@ def safe_arccos(x):
 # Generate the minimum angle transformation with PyTorch, to enable automatic differentiation
 def transformation_matrix_tensor(q1, q2, syms):
 
-        # import pdb; pdb.set_trace()
-        
-        syms = syms.to(torch.device('cuda:0'))
-        inv = inverse_matrix_generate(q1) # only uses q1 to obtain tensor shape.
+        syms_neg = -1*syms
+        syms = torch.cat((syms, syms_neg))
 
+        syms = syms.to(torch.device('cuda:0'))
+
+        inv = inverse_matrix_generate(q1) # only uses q1 to obtain tensor shape.
         q1_inv = q1 * inv
         q2_inv = q2 * inv
-        T = matrix_hamilton_prod(q1, q2_inv)
+        T1 = matrix_hamilton_prod(q1, q2_inv)
+        T2 = matrix_hamilton_prod(q2, q1_inv)
 
-        T_syms = outer_prod(T, syms)
-        T_syms = T_syms.view(-1, syms.shape[0], 4)
+        T1_syms = outer_prod(T1, syms)
+        T1_syms = T1_syms.view(-1, syms.shape[0], 4)
+
+        T2_syms = outer_prod(T2, syms)
+        T2_syms = T2_syms.view(-1, syms.shape[0], 4)
+
+        # import pdb; pdb.set_trace()
+        T_syms = torch.cat((T1_syms, T2_syms), 1)
 
         theta = torch.arccos(T_syms[...,0])
         min_ind = theta.min(-1)[1] # still differentiable --> gradient flows through only for min.
@@ -129,8 +137,8 @@ def transformation_matrix_tensor(q1, q2, syms):
 
         T_min = T_min.reshape(q1.shape)
 
-        q_loss_inv = matrix_hamilton_prod(q1_inv, T_min) ## Perhaps the error is here, can't backpropagate current inverse function applied to q_nn.
-        q_loss = q_loss_inv * inv
+        # q_loss_inv = matrix_hamilton_prod(q1_inv, T_min) ## Perhaps the error is here, can't backpropagate current inverse function applied to q_nn.
+        # q_loss = q_loss_inv * inv
 
         return T_min
 
@@ -189,17 +197,23 @@ def rot_dist(q1,q2=None):
         dist_min = dists.min(-1)[0]
         return dist_min
 
-# Calculates minimum symmetry misorientation of all pixels
-def rot_dist_relative(q1, q2, syms):
+# Calculates validation loss, using the minimum angle transformation, but without tracking gradients.
+def validation_min_angle_transformation(q1, q2, syms):
 
         # import pdb; pdb.set_trace()
         device = torch.device('cuda:0')
 
         q1 = q1.to(device)
         # q2 = q2.to(device)
-        T = matrix_hamilton_prod(q1, inverse(q2.to(device)))
-        T_syms = outer_prod(T, syms)
-        T_syms = T_syms.view(-1, syms.shape[0], 4)
+        T1 = matrix_hamilton_prod(q1, inverse(q2.to(device)))
+        T1_syms = outer_prod(T1, syms)
+        T1_syms = T1_syms.view(-1, syms.shape[0], 4)
+
+        T2 = matrix_hamilton_prod(q2, inverse(q1.to(device)))
+        T2_syms = outer_prod(T2, syms)
+        T2_syms = T2_syms.view(-1, syms.shape[0], 4)
+
+        T_syms = torch.cat((T1_syms, T2_syms), 1)
 
         theta = torch.arccos(T_syms[...,0])
         min_ind = theta.min(-1)[1]
@@ -209,20 +223,15 @@ def rot_dist_relative(q1, q2, syms):
         T_min = T_syms[torch.arange(len(T_syms)), min_ind]
         T_min = T_min.reshape(q1.shape)
 
-        zero_broadcast_tensor = torch.Tensor([1,0,0,0])
-        zero_broadcast_tensor = zero_broadcast_tensor.reshape(1,1,1,4).to(torch.device('cuda:0'))
+        theta = 2*safe_arccos(T_min[...,0])
+        # zero_broadcast_tensor = torch.Tensor([1,0,0,0])
+        # zero_broadcast_tensor = zero_broadcast_tensor.reshape(1,1,1,4).to(torch.device('cuda:0'))
 
-        q_loss = inverse(matrix_hamilton_prod(inverse(q1), T_min))
-        # added fz reduction, with the intention of checking if this reduces the euclidean distance calc.
-        q_loss_fz = fz_reduce(q_loss, syms)
-        # COULD THE ERROR BE SOMEWHERE HERE, BELOW?:
-        # euclid_dist = torch.linalg.norm(q_loss - q2,2,dim=-1)
-        # euclid_dist = torch.linalg.norm(q_loss_fz - q2, 2, dim=-1)
-        euclid_dist = torch.linalg.norm(T_min - zero_broadcast_tensor, 2, dim=-1)
-        # import pdb; pdb.set_trace() ## WHY DID I PLACE A 0 INDEX?
-        dist = 4*torch.arcsin(euclid_dist / 2)
+        # euclid_dist = torch.linalg.norm(T_min - zero_broadcast_tensor, 2, dim=-1)
+        # # import pdb; pdb.set_trace() ## WHY DID I PLACE A 0 INDEX?
+        # dist = 4*torch.arcsin(euclid_dist / 2)
    
-        return dist
+        return theta
 
 # quaternion 'q', to the power of 't'
 # you need to understand 

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # modelname"edsr_rot_dist_approx_prog_pa"
-modelname='edsr_rot_dist_approx_prog_patch_lr_div_10'
+modelname='Ti_edsr_minimum_angle_transformation'
 filetype="SR"
 datasettype=("Test")
-material="Open_718"
-sect=("x_block")
+material="Ti64"
+sect=("X_Block")
 
 # path of Dream3D software
 dream3d_path="/media/hdd3/jmgiorgi/DREAM3D-6.5.171-Linux-x86_64/bin"
@@ -17,12 +17,12 @@ json_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping/pipelin
 home_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping"
 
 # path where numpy files (output of models) are saved
-file_path="/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/edsr_rot_dist_approx_slerp_upsample/results"
+file_path="/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/Ti_edsr_minimum_angle_transformation/results"
 # file_path="/media/hdd3/jmgiorgi/SLERP/Open_718/X4"
 # file_path="/media/hdd3/jmgiorgi/fz_reduced/Open_718/Test/HR_Images"
 
 #path of your source dream3d file as refernece
-sourcename="/media/hdd3/jmgiorgi/FCC_Val_02-UPsa.dream3d"
+sourcename="/media/hdd3/jmgiorgi/Ti64_DIC_Homo_and_Cubochoric_FZ.dream3d"
 
 for s in ${sect[@]}; do
    
@@ -45,8 +45,5 @@ for s in ${sect[@]}; do
   
     python dream3d_to_rgb.py --fpath $file_path --data $material --model_name $modelname --file_type $filetype --dataset_type $datasettype --section $s
 
-
-
 done
-
 

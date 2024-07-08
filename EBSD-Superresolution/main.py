@@ -42,8 +42,7 @@ if checkpoint.ok:
     dataset_train = EBSD_Ti64DIC_dataset(args, lr_train_data_path, hr_train_data_path) 
     dataset_val = EBSD_Ti64DIC_dataset(args, lr_val_data_path, hr_val_data_path, is_Train=False) 
  
-
-
+ 
     data_loader_train = DataLoader(dataset=dataset_train, batch_size=args.batch_size, 
                              num_workers= 16, 
                              shuffle=True, drop_last=True)       
