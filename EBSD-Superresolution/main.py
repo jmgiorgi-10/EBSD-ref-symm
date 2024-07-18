@@ -25,7 +25,7 @@ if checkpoint.ok:
 
     """
 
-    #import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     lr_train_data_path = None
     hr_train_data_path = f'/{args.input_dir}/{args.hr_data_dir}' 
 
@@ -38,6 +38,7 @@ if checkpoint.ok:
     print("LR Val Path:", lr_val_data_path)
     print("HR Val Path:", hr_val_data_path)
      
+    import pdb; pdb.set_trace()
 
     dataset_train = EBSD_Ti64DIC_dataset(args, lr_train_data_path, hr_train_data_path) 
     dataset_val = EBSD_Ti64DIC_dataset(args, lr_val_data_path, hr_val_data_path, is_Train=False) 

@@ -67,6 +67,22 @@ def outer_prod(q1,q2):
         return X_out
 
 
+# def matrix_hamilton_outer_prod(q1,q2):
+# # q1 = q1.cuda(); q2 = q2.cuda()
+# X1 = vec2mat(q1)
+# X2 = torch.movedim(q2,-1,0)
+# X1_flat = X1.reshape((-1,4))
+# X2_flat = X2.reshape((4,-1))
+# X_out = torch.matmul(X1_flat,X2_flat)
+# X_out = X_out.reshape(q1.shape + q2.shape[:-1])
+# X_out = torch.movedim(X_out,len(q1.shape)-1,-1)
+# return X_out
+
+# def matrix_hamilton_outer_prod(q1, q2):
+#         X1 = vec2mat(q1)
+#         X2 = vec2mat(q2)
+
+
 # Utilities to create random vectors on the L2 sphere. First produces
 # random samples from a rotationally invariantt distibution (i.e. Gaussian)
 # and then normalizes onto the unit sphere
@@ -119,6 +135,8 @@ def transformation_matrix_tensor(q1, q2, syms):
 
         T2_syms = outer_prod(T2, syms)
         T2_syms = T2_syms.view(-1, syms.shape[0], 4)
+
+        ## Is it possible 
 
         # import pdb; pdb.set_trace()
         T_syms = torch.cat((T1_syms, T2_syms), 1)

@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # modelname"edsr_rot_dist_approx_prog_pa"
-modelname='Ti_edsr_minimum_angle_transformation'
+modelname='Ti_han_minimum_angle_transformation_2000_epochs'
 filetype="SR"
 datasettype=("Test")
 material="Ti64"
-sect=("X_Block")
+# sect=("X_Block")
+sect=("X_Block" "Y_Block" "Z_Block")
 
 # path of Dream3D software
 dream3d_path="/media/hdd3/jmgiorgi/DREAM3D-6.5.171-Linux-x86_64/bin"
@@ -17,7 +18,7 @@ json_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping/pipelin
 home_path="/home/jmgiorgi/EBSD-ref-symm/EBSD-Superresolution/IPF_mapping"
 
 # path where numpy files (output of models) are saved
-file_path="/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/Ti_edsr_minimum_angle_transformation/results"
+file_path="/media/hdd3/jmgiorgi/EBSD-ref-symm/experiments/saved_weights/Ti_han_minimum_angle_transformation_2000_epochs/results"
 # file_path="/media/hdd3/jmgiorgi/SLERP/Open_718/X4"
 # file_path="/media/hdd3/jmgiorgi/fz_reduced/Open_718/Test/HR_Images"
 

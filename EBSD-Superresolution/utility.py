@@ -30,9 +30,13 @@ class EBSD_Ti64DIC_dataset(data.Dataset):
         self.args = args
         self.root_lr = root_lr
         self.root_hr = root_hr
-        # 
-        self.data_lr_files = sorted(glob.glob(f'{root_lr}/*Ti64*.npy')) if root_lr is not None else None 
-        self.data_hr_files = sorted(glob.glob(f'{root_hr}/*Ti64*.npy'))
+
+        #  
+        self.data_lr_files = sorted(glob.glob(f'{root_lr}/*.npy')) if root_lr is not None else None 
+        self.data_hr_files = sorted(glob.glob(f'{root_hr}/*.npy'))
+        # Uncomment if we want to refer to a specific Titanium type:
+        # self.data_lr_files = sorted(glob.glob(f'{root_lr}/*Ti64*.npy')) if root_lr is not None else None 
+        # self.data_hr_files = sorted(glob.glob(f'{root_hr}/*Ti64*.npy'))
         self.is_Train = is_Train
         
     def load_file(self, filepath_lr, filepath_hr):

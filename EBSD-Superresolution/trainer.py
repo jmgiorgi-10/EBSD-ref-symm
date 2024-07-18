@@ -132,7 +132,6 @@ class Trainer():
                 #print(f'processing the {filename_lr}')
                 lr, hr = self.prepare([lr, hr]) 
                 sr = self.model(lr, self.scale)
-                
                 _, ch, _, _ = sr.shape
  
                 org_shape = hr.shape
