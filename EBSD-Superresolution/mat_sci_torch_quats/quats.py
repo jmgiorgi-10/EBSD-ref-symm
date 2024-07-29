@@ -127,8 +127,8 @@ def transformation_matrix_tensor(q1, q2, syms):
         inv = inverse_matrix_generate(q1) # only uses q1 to obtain tensor shape.
         q1_inv = q1 * inv
         q2_inv = q2 * inv
-        T1 = matrix_hamilton_prod(q1, q2_inv)
-        T2 = matrix_hamilton_prod(q2, q1_inv)
+        T1 = matrix_hamilton_prod(q1_inv, q2)
+        T2 = matrix_hamilton_prod(q2_inv, q1)
 
         T1_syms = outer_prod(T1, syms)
         T1_syms = T1_syms.view(-1, syms.shape[0], 4)
@@ -141,13 +141,13 @@ def transformation_matrix_tensor(q1, q2, syms):
         # import pdb; pdb.set_trace()
         T_syms = torch.cat((T1_syms, T2_syms), 1)
 
-        theta = torch.arccos(T_syms[...,0])
+        theta = torch.arccos(T1_syms[...,0])
         min_ind = theta.min(-1)[1] # still differentiable --> gradient flows through only for min.
         min_ind_flat = min_ind.view(-1)
 
         try:
                 # import pdb; pdb.set_trace()
-                T_min = T_syms[torch.arange(len(T_syms)), min_ind_flat]
+                T_min = T1_syms[torch.arange(len(T1_syms)), min_ind_flat]
 
         except RuntimeError as e:
                 print('broadcasting issue \n')
@@ -214,6 +214,25 @@ def rot_dist(q1,q2=None):
         dists = quat_dist(q1_w_neg,q2)
         dist_min = dists.min(-1)[0]
         return dist_min
+
+def validation_rot_dist_approx_MAT_symmetry(q1, q2, syms):
+        device = torch.device('cuda:0')
+
+        q1 = q1.to(device)
+        q2 = q2.to(device)
+        T1 = matrix_hamilton_prod(q1, inverse(q2.to(device)))
+        T1_syms = outer_prod(T1, syms)
+        T1_syms = T1_syms.view(-1, syms.shape[0], 4)
+
+        theta = 2*safe_arccos(T1_syms[...,0])
+        min_ind = theta.min(-1)[1]
+
+        # theta_min = theta[torch.arange(len(theta)), min_ind]
+        # import pdb; pdb.set_trace()
+        T_min = T1_syms[torch.arange(len(T1_syms)), min_ind]
+        T_min = T_min.reshape(q1.shape)
+
+        theta = 2*safe_arccos(T_min[...,0])
 
 # Calculates validation loss, using the minimum angle transformation, but without tracking gradients.
 def validation_min_angle_transformation(q1, q2, syms):

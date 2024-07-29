@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import math
 from mat_sci_torch_quats.symmetries import fcc_syms
-from mat_sci_torch_quats.quats import matrix_hamilton_prod, outer_prod, inverse, scalar_first2last, scalar_last2first, slerp_calc, slerp_calc2
+from mat_sci_torch_quats.quats import matrix_hamilton_prod, outer_prod, inverse, scalar_first2last, scalar_last2first, slerp_calc, slerp_calc2, quat_exp, quat_exp2
 
 
 
@@ -70,21 +70,25 @@ def slerp2(q1, q2, t, syms):
 
     syms = syms.to(torch.device('cuda:0'))
 
-    A = matrix_hamilton_prod(q1, inverse(q2)) # transformation from crystal frame 1, to crystal frame 2
-    A_syms = outer_prod(A, syms) # symmetry equivalent transformations
-    A_syms *= torch.sign(A_syms[...,:1]) # ensure we are on postivie hemishpere
+    T = matrix_hamilton_prod(inverse(q1), q2) # transformation from crystal frame 1, to crystal frame 2
+    T_syms = outer_prod(T, syms) # symmetry equivalent transformations
+    T_syms *= torch.sign(T_syms[...,:1]) # ensure we are on postivie hemishpere
 
-    A_syms = A_syms.view(-1,24,4)
-    a_min_indices = torch.max(A_syms[...,0],-1)[1]
+    T_syms = T_syms.view(-1,syms.shape[0],4)
+    a_min_indices = torch.max(T_syms[...,0],-1)[1]
     a_min_indices_flat = a_min_indices.view(-1)
-    A_min = A_syms[torch.arange(len(A_syms)), a_min_indices_flat]
+    T_min = T_syms[torch.arange(len(T_syms)), a_min_indices_flat]
 
-    A_min = A_min.reshape(A.shape)
+    T_min = T_min.reshape(T.shape)
 
-    qs = inverse(matrix_hamilton_prod(inverse(q1), A_min))
-    q3 = slerp_calc2(q1, qs, t)
+    # Tried changing Slerp to not account for symmetry.
+    return matrix_hamilton_prod(q1.unsqueeze(1), quat_exp2(T, t))
+    # return matrix_hamilton_prod(q1.unsqueeze(1), quat_exp2(T_min, t))
 
-    return q3
+    # qs = inverse(matrix_hamilton_prod(inverse(q1), A_min))
+    # q3 = slerp_calc2(q1, qs, t)
+
+    # return q3
 
 def quat_upsampling_symm3(X, scale=4):
 

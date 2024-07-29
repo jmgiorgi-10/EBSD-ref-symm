@@ -29,7 +29,7 @@ class EDSR(nn.Module):
         ]
         m_body.append(conv(n_feats, n_feats, kernel_size))
 
-        m_tail = [transp_conv(n_feats, args.n_colors, 6)]
+        m_tail = [transp_conv(n_feats, args.n_colors, kernel_size)]
 
         # Try: slerp upsample --> then using convolution and deconvolution on HR scale (i.e., avoid pixel shuffle / sub-pixel convolution)
 
@@ -41,7 +41,7 @@ class EDSR(nn.Module):
     # Forward method for the EDSR class
     def forward(self, x):
         
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
         x = x.to(torch.device('cuda:0'))
         # x = self.upsample(x) # upsample with slerp
@@ -51,9 +51,9 @@ class EDSR(nn.Module):
         res += x
 
         x = self.tail(res) # reduce number of channels from 128 to 4, in preperation for Slerp-MAT
-        # x_hr = self.upsample(x) # upsample with slerp
+        x_hr = self.upsample(x) # upsample with slerp
 
-        return x
+        return x_hr
 
     def load_state_dict(self, state_dict, strict=True):
         own_state = self.state_dict()
