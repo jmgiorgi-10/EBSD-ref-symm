@@ -1,10 +1,4 @@
-# EBSD-Superresolution: Adaptable Physics-Based Super-Resolution for Electron Backscatter Diffraction Maps
-[Devendra K. Jangid*](https://sites.google.com/view/dkj910), [Neal R. Brodnik*](https://scholar.google.com/citations?user=3dAoFJkAAAAJ&hl=en), [Michael G. Goebel](https://scholar.google.com/citations?user=FwMJrygAAAAJ&hl=en), [Amil Khan](https://scholar.google.com/citations?user=r6jNH5UAAAAJ&hl=en), [SaiSidharth Majeti](), [McLean P. Echlin](https://scholar.google.com/citations?user=fxN2OsUAAAAJ&hl=en), [Samantha H. Daly](https://scholar.google.com/citations?user=3whYx4UAAAAJ&hl=en), [Tresa M. Pollock](https://materials.ucsb.edu/people/faculty/tresa-pollock), [B.S. Manjunath](https://scholar.google.com/citations?user=wRYM4qgAAAAJ&hl=en)
-
-[* equal contirbution]
-
-[Paper](https://www.nature.com/articles/s41524-022-00924-2) ||
-[Poster](https://github.com/UCSB-VRL/EBSD-Superresolution/blob/main/images/EBSD_SR_Poster_24x36_final.pdf)
+# EBSD-Superresolution: Minimum Angle Transformation and Physics-Based Super-Resolution for Electron Backscatter Diffraction Maps
 
 <hr />
 
@@ -12,13 +6,13 @@
 <hr />
 
 ## EBSD Framework
-<img src = "images/EBSD_SR_train_val_loss_comp_lg.png">
+<img src = "images/Network Architecture and Loss.png">
 
 
 ## Installation
 Step 1: Clone repo  
 
-      git clone "https://github.com/UCSB-VRL/EBSD-Superresolution.git"
+      git clone "https://github.com/UCSB-VRL/EBSD-ref-symm.git"
       
 Step 2: Create Virtual environment
 
@@ -126,19 +120,7 @@ Material datasets will be available by request at discretion of authors.
 ## Acknowledgements
 This code is built on [HAN](https://github.com/wwlCape/HAN), [SAN](https://github.com/daitao/SAN), [RCAN](https://github.com/yulunzhang/RCAN), and [EDSR](https://github.com/sanghyun-son/EDSR-PyTorch). We thank the authors for sharing their codes. 
 
-## Citation
-If you use EBSD-SR, please consider citing:
 
-      @article{jangid2022adaptable,
-      title={Adaptable physics-based super-resolution for electron backscatter diffraction maps},
-      author={Jangid, Devendra K and Brodnik, Neal R and Goebel, Michael G and Khan, Amil and Majeti, SaiSidharth and Echlin, McLean P and Daly, Samantha H and Pollock, Tresa M and Manjunath, BS},
-      journal={npj Computational Materials},
-      volume={8},
-      number={1},
-      pages={255},
-      year={2022},
-      publisher={Nature Publishing Group UK London}
-      }
 
 ## Contact
 Should you have any question, please contact dkjangid@ucsb.edu or nbrodnik@ucsb.edu
