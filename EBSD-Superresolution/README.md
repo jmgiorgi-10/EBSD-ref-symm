@@ -112,7 +112,9 @@ The model will generate superresolved EBSD map in ```npy``` format. To convert i
       
  
 ## Results
-<img src = "images/QualitativeResults.png">
+<img src = "SR new vs previous Nickel 1.png.png">
+<img src = "SR new vs previous Ti 1.png">
+<img src = "Slerp SR Comparisons.png">
 
 ## Datasets
 Material datasets will be available by request at discretion of authors. 
