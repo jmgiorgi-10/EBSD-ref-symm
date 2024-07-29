@@ -2,7 +2,7 @@
 
 <hr />
 
-> **Abstract:** *In computer vision, single image super-resolution (SISR) has been extensively explored using convolutional neural networks (CNNs) on optical images, but images outside this domain, such as those from scientific experiments, are not well investigated. Experimental data is often gathered using non-optical methods, which alters the metrics for image quality. One such example is electron backscatter diffraction (EBSD), a materials characterization technique that maps crystal arrangement in solid materials, which provides insight into processing, structure, and property relationships.  We present a broadly adaptable approach for applying state-of-art SISR networks to generate super-resolved EBSD orientation maps.  This approach includes quaternion-based orientation recognition, loss functions that consider rotational effects and crystallographic symmetry, and an inference pipeline to convert network output into established visualization formats for EBSD maps. The ability to generate physically accurate, high-resolution EBSD maps with super-resolution enables high throughput characterization and broadens the capture capabilities for three-dimensional experimental EBSD datasets.*
+> **Abstract:** *Electron backscatter diffraction (EBSD) is a scanning electron microscopy technique used for collecting orientation properties of a material sample over space at the micro-meter scale. Because collecting this data is known for being costly and time-consuming, various methods have been proposed to upsample collected data, or generate new microstructures from a latent space. We explore how a spherical linear interpolation accounting for symmetry minimization can be used to superresolve EBSD images, which is the first known attempt to superresolve such images with orientation interpolation without causing symmetry aliasing. We also propose a new loss function based on a minimum angle transformation between superresolved and ground truth quaternions in the training set, to obtain state-of-the-art results, in terms of the angular difference of the superresolved data and the ground truth. The result is a $882\%$ reduction in mean angular distance of Superresolved versus Ground Truth data for the collected Nickel dataset, with respect to the previous state-of-the-art loss function, and a $321\%$ reduction for the collected Titanium dataset*
 <hr />
 
 ## EBSD Framework
@@ -112,6 +112,8 @@ The model will generate superresolved EBSD map in ```npy``` format. To convert i
       
  
 ## Results
+<img src = "EDSR Nickel Misorientation pdf comparison.png">
+<img src = "EDSR Titanium Misorientation pdf comparison.png">
 <img src = "SR new vs previous Nickel 1.png">
 <img src = "SR new vs previous Ti 1.png">
 <img src = "Slerp SR Comparisons.png">
