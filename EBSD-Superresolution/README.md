@@ -6,7 +6,7 @@
 <hr />
 
 ## EBSD Framework
-<img src = "images/Network Architecture and Loss.png">
+<img src = "Network Architecture and Loss.png">
 
 
 ## Installation
